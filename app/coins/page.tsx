@@ -1,104 +1,90 @@
-import { fetcher } from '@/lib/coingecko.actions';
-import Image from 'next/image';
+import React from 'react';
+import { fetcher, getPools, type OHLCData, type CoinDetailsData, type NextPageProps } from '@/lib/coingecko.actions';
+import { formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 
-import { cn, formatPercentage, formatCurrency } from '@/lib/utils';
-import DataTable from '@/components/DataTable';
-import CoinsPagination from '@/components/CoinsPagination';
+const Page = async ({ params }: NextPageProps) => {
+  // NEXT.JS 16 FIX: Must await params
+  const { id } = await params;
 
-const Coins = async ({ searchParams }: NextPageProps) => {
-  const { page } = await searchParams;
+  try {
+    /**
+     * SURGICAL FIX: 
+     * We removed 'interval' and 'precision' parameters.
+     * The Demo API automatically provides the correct granularity for days=1.
+     * Including extra params causes the 400 "invalid interval" error.
+     */
+    const [coin, ohlc, pools] = await Promise.all([
+      fetcher<CoinDetailsData>(`coins/${id}`, {
+        localization: false,
+        tickers: false,
+      }),
+      fetcher<OHLCData[]>(`coins/${id}/ohlc`, { 
+        vs_currency: 'usd', 
+        days: 1 
+      }), 
+      getPools(id),
+    ]);
 
-  const currentPage = Number(page) || 1;
-  const perPage = 10;
+    return (
+      <main className="main-container py-10">
+        <section className="flex flex-col gap-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img 
+                src={coin.image.large} 
+                alt={coin.name} 
+                className="h-12 w-12 rounded-full ring-2 ring-border/50" 
+              />
+              <h1 className="text-3xl font-black tracking-tighter uppercase italic">
+                {coin.name} <span className="text-muted-foreground font-light">{coin.symbol}</span>
+              </h1>
+            </div>
+            <div className="text-right font-mono">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Live Price</p>
+              <p className="text-2xl font-bold text-green-500">
+                {formatCurrency(coin.market_data.current_price.usd)}
+              </p>
+            </div>
+          </div>
 
-  const coinsData = await fetcher<CoinMarketData[]>('/coins/markets', {
-    vs_currency: 'usd',
-    order: 'market_cap_desc',
-    per_page: perPage,
-    page: currentPage,
-    sparkline: 'false',
-    price_change_percentage: '24h',
-  });
+          {/* Terminal Visualization Placeholder */}
+          <div className="relative h-[400px] w-full rounded-2xl border border-dashed border-border bg-muted/5 flex items-center justify-center overflow-hidden">
+             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent opacity-50" />
+             <p className="font-mono text-[10px] uppercase tracking-[0.5em] text-muted-foreground animate-pulse">
+                Terminal Sync: {ohlc.length} Candles Active
+             </p>
+          </div>
 
-  const columns: DataTableColumn<CoinMarketData>[] = [
-    {
-      header: 'Rank',
-      cellClassName: 'rank-cell',
-      cell: (coin) => (
-        <>
-          #{coin.market_cap_rank}
-          <Link href={`/coins/${coin.id}`} aria-label="View coin" />
-        </>
-      ),
-    },
-    {
-      header: 'Token',
-      cellClassName: 'token-cell',
-      cell: (coin) => (
-        <div className="token-info">
-          <Image src={coin.image} alt={coin.name} width={36} height={36} />
-          <p>
-            {coin.name} ({coin.symbol.toUpperCase()})
-          </p>
-        </div>
-      ),
-    },
-    {
-      header: 'Price',
-      cellClassName: 'price-cell',
-      cell: (coin) => formatCurrency(coin.current_price),
-    },
-    {
-      header: '24h Change',
-      cellClassName: 'change-cell',
-      cell: (coin) => {
-        const isTrendingUp = coin.price_change_percentage_24h > 0;
-
-        return (
-          <span
-            className={cn('change-value', {
-              'text-green-600': isTrendingUp,
-              'text-red-500': !isTrendingUp,
-            })}
-          >
-            {isTrendingUp && '+'}
-            {formatPercentage(coin.price_change_percentage_24h)}
-          </span>
-        );
-      },
-    },
-    {
-      header: 'Market Cap',
-      cellClassName: 'market-cap-cell',
-      cell: (coin) => formatCurrency(coin.market_cap),
-    },
-  ];
-
-  const hasMorePages = coinsData.length === perPage;
-
-  const estimatedTotalPages = currentPage >= 100 ? Math.ceil(currentPage / 100) * 100 + 100 : 100;
-
-  return (
-    <main id="coins-page">
-      <div className="content">
-        <h4>All Coins</h4>
-
-        <DataTable
-          tableClassName="coins-table"
-          columns={columns}
-          data={coinsData}
-          rowKey={(coin) => coin.id}
-        />
-
-        <CoinsPagination
-          currentPage={currentPage}
-          totalPages={estimatedTotalPages}
-          hasMorePages={hasMorePages}
-        />
+          {/* On-Chain Data */}
+          {pools.address && (
+            <div className="rounded-xl border border-border/40 bg-card/40 p-6 backdrop-blur-md">
+              <h3 className="text-xs font-black uppercase tracking-widest text-primary mb-4">On-Chain Terminal</h3>
+              <p className="text-sm font-mono text-muted-foreground">
+                Network: <span className="text-foreground">{pools.network}</span>
+              </p>
+              <p className="text-sm font-mono text-muted-foreground">
+                Contract: <span className="text-primary truncate block md:inline">{pools.address}</span>
+              </p>
+            </div>
+          )}
+        </section>
+      </main>
+    );
+  } catch (error) {
+    console.error("[BitFlow Terminal Error]:", error);
+    return (
+      <div className="main-container py-20 text-center">
+        <h2 className="text-xl font-black uppercase text-red-500">Connection Failed</h2>
+        <p className="text-xs text-muted-foreground mt-2 uppercase tracking-tighter">
+          The terminal could not synchronize with the market data stream.
+        </p>
+        <Link href="/" className="mt-8 inline-block text-[10px] font-black uppercase tracking-widest border-b border-primary text-primary pb-1">
+          Return to Dashboard
+        </Link>
       </div>
-    </main>
-  );
+    );
+  }
 };
 
-export default Coins;
+export default Page;
