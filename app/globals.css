@@ -1,15 +1,13 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,16 +37,27 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Brand colors */
+  --color-dark-900: var(--dark-900);
+  --color-dark-700: var(--dark-700);
+  --color-dark-500: var(--dark-500);
+  --color-dark-400: var(--dark-400);
+  --color-purple-600: var(--purple-600);
+  --color-purple-100: var(--purple-100);
+  --color-green-500: var(--green-500);
+  --color-green-400: var(--green-400);
+  --color-green-300: var(--green-300);
+  --color-red-500: var(--red-500);
+  --color-yellow-500: var(--yellow-500);
 }
 
 :root {
+  --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -67,12 +76,11 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -102,11 +110,11 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -115,6 +123,22 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Brand colors */
+  --dark-900: #000510;
+  --dark-700: #0f1316;
+  --dark-500: #1a2027;
+  --dark-400: #1e2833;
+
+  --purple-600: #1b254b;
+  --purple-100: #a3aed0;
+
+  --green-500: #76da44;
+  --green-400: #2ebe7b;
+  --green-300: #99e39e;
+
+  --red-500: #ff685f;
+  --yellow-500: #dabe44;
 }
 
 @layer base {
@@ -122,9 +146,824 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-dark-700 text-foreground;
   }
-  html {
-    @apply font-sans;
+}
+
+@layer components {
+  .container {
+    @apply px-4 sm:px-6 mx-auto max-w-360;
   }
+
+  .main-container {
+    @apply py-6 md:py-12 mx-auto px-4 sm:px-6 max-w-360 w-full space-y-6 md:space-y-6;
+  }
+
+  .badge {
+    @apply font-medium mt-2 h-fit py-1 flex items-center gap-1;
+  }
+
+  .badge-up {
+    @apply bg-green-600/20! text-green-600!;
+  }
+
+  .badge-down {
+    @apply bg-red-500/20! text-red-500!;
+  }
+
+  .skeleton {
+    @apply bg-dark-400/60;
+  }
+
+  header {
+    @apply border-b border-dark-400 h-20;
+
+    .inner {
+      @apply flex justify-between items-center h-full;
+
+      a {
+        @apply mb-0;
+      }
+
+      nav {
+        @apply flex h-full items-center;
+
+        .nav-link {
+          @apply px-6 py-5 flex items-center transition-all hover:text-white font-medium h-full text-purple-100 cursor-pointer;
+        }
+
+        .nav-link.is-active {
+          @apply text-white;
+        }
+
+        .nav-link.is-home {
+          @apply max-sm:hidden;
+        }
+      }
+    }
+  }
+
+  #candlestick-chart {
+    @apply p-3 mt-5 rounded-lg bg-dark-500;
+
+    .chart-header {
+      @apply flex flex-col gap-3 xl:flex-row xl:items-center mb-4 font-semibold text-[#e6eef8] text-[20px];
+    }
+
+    .button-group {
+      @apply flex gap-1 xl:gap-2 items-center;
+    }
+
+    .config-button {
+      @apply rounded-sm border-0 cursor-pointer px-2.5 py-2 text-xs xl:text-sm text-purple-100 hover:bg-dark-400 hover:text-white;
+    }
+
+    .config-button-active {
+      @apply rounded-sm px-2.5 py-1.5 border-0 cursor-pointer text-sm text-gray-900 bg-green-500;
+    }
+
+    .chart {
+      @apply w-full min-h-50;
+    }
+  }
+
+  #coin-card {
+    @apply bg-dark-500 hover:bg-dark-400/50 transition-all rounded-lg p-5 border border-purple-600/20 hover:border-purple-600/50 cursor-pointer h-fit;
+
+    .header {
+      @apply flex gap-3 mb-4;
+
+      img {
+        @apply size-12 rounded-full;
+      }
+
+      h3 {
+        @apply font-semibold text-lg;
+      }
+
+      p {
+        @apply text-sm text-gray-400 uppercase;
+      }
+    }
+
+    .price-row {
+      @apply flex justify-between items-center mb-5;
+
+      .price {
+        @apply text-xl font-bold;
+      }
+
+      .change {
+        @apply flex items-center gap-2;
+      }
+    }
+
+    .stats {
+      @apply space-y-3;
+
+      .stat-row {
+        @apply flex gap-1 justify-between;
+
+        .label {
+          @apply text-purple-100;
+        }
+
+        .value {
+          @apply font-medium;
+        }
+      }
+    }
+  }
+
+  #categories {
+    @apply pt-8 mt-5 w-full bg-dark-500 rounded-xl overflow-hidden;
+
+    h4 {
+      @apply text-xl md:text-2xl font-semibold mb-2 pl-5;
+    }
+
+    .category-cell {
+      @apply pl-5 font-bold;
+    }
+
+    .top-gainers-cell {
+      @apply flex gap-1 mr-5;
+
+      img {
+        @apply rounded-full py-2;
+      }
+    }
+
+    .change-header-cell {
+      @apply font-medium;
+    }
+
+    .change-cell {
+      @apply flex flex-1 gap-1 items-center pl-2 text-center font-medium;
+    }
+
+    .market-cap-cell {
+      @apply font-medium;
+    }
+
+    .volume-cell {
+      @apply font-medium;
+    }
+  }
+
+  #trending-coins {
+    @apply w-full flex flex-col justify-center h-full py-4 bg-dark-500 rounded-xl;
+
+    h4 {
+      @apply text-xl md:text-2xl font-semibold mb-2 px-5;
+    }
+
+    .trending-coins-table {
+      @apply bg-dark-500 overflow-hidden;
+
+      .name-cell {
+        @apply font-bold;
+
+        a {
+          @apply pl-1 md:pl-2 py-1 md:py-2 xl:py-1 flex items-center gap-2 md:gap-3;
+
+          img {
+            @apply rounded-full size-8 md:size-9;
+          }
+
+          p {
+            @apply text-sm md:text-base;
+          }
+        }
+      }
+
+      .change-cell {
+        @apply font-medium py-4 pr-3 md:pr-5;
+      }
+
+      .price-cell {
+        @apply font-bold pr-5 text-sm max-w-full truncate;
+      }
+
+      .price-change {
+        @apply flex gap-1 items-center text-sm font-medium;
+      }
+    }
+  }
+
+  .home-grid {
+    @apply grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 items-start lg:items-center gap-6;
+  }
+
+  #categories-fallback {
+    @apply pt-8 mt-5 w-full bg-dark-500 rounded-xl overflow-hidden;
+
+    h4 {
+      @apply text-xl md:text-2xl font-semibold mb-2 pl-5;
+    }
+
+    .category-cell {
+      @apply pl-5 font-bold;
+    }
+
+    .top-gainers-cell {
+      @apply flex gap-1 mr-5;
+    }
+
+    .change-header-cell {
+      @apply font-medium;
+    }
+
+    .change-cell {
+      @apply flex gap-1 items-center pl-2 text-center font-medium;
+    }
+
+    .market-cap-cell {
+      @apply font-medium;
+    }
+
+    .volume-cell {
+      @apply font-medium;
+    }
+
+    .category-skeleton {
+      @apply h-4 w-32;
+    }
+
+    .coin-skeleton {
+      @apply h-7 w-7 rounded-full;
+    }
+
+    .value-skeleton-sm {
+      @apply h-4 w-16;
+    }
+
+    .value-skeleton-md {
+      @apply h-4 w-20;
+    }
+
+    .value-skeleton-lg {
+      @apply h-4 w-24;
+    }
+
+    .change-icon {
+      @apply h-3.5 w-3.5 rounded-full;
+    }
+  }
+
+  #coin-overview-fallback {
+    @apply w-full h-full xl:col-span-2 px-2 bg-dark-500 rounded-xl;
+
+    .header {
+      @apply flex-1 mb-2 flex gap-2 md:gap-3;
+    }
+
+    .header-image {
+      @apply w-10 h-10 md:w-14 md:h-14 rounded-full;
+    }
+
+    .info {
+      @apply flex flex-col gap-2;
+    }
+
+    .header-line-sm {
+      @apply h-3 w-24 md:w-28;
+    }
+
+    .header-line-lg {
+      @apply h-7 w-36 md:w-44;
+    }
+
+    .period-button-skeleton {
+      @apply h-7 w-9 md:w-10 rounded-sm;
+    }
+
+    .chart {
+      @apply h-90;
+    }
+
+    .chart-skeleton {
+      @apply h-full w-full rounded-xl;
+    }
+  }
+
+  #trending-coins-fallback {
+    @apply w-full flex flex-col justify-center h-full py-4 bg-dark-500 rounded-xl;
+
+    h4 {
+      @apply text-xl md:text-2xl font-semibold mb-2 px-5;
+    }
+
+    .trending-coins-table {
+      @apply bg-dark-500 overflow-hidden;
+
+      .name-cell {
+        @apply font-bold;
+      }
+
+      .name-link {
+        @apply pl-1 md:pl-2 py-1 md:py-2 xl:py-1 flex items-center gap-2 md:gap-3;
+      }
+
+      .name-image {
+        @apply rounded-full size-8 md:size-9;
+      }
+
+      .name-line {
+        @apply h-4 w-24;
+      }
+
+      .change-cell {
+        @apply font-medium py-4 pr-3 md:pr-5;
+      }
+
+      .price-cell {
+        @apply font-bold pr-5 text-sm max-w-full truncate;
+      }
+
+      .price-change {
+        @apply flex gap-1 items-center text-sm font-medium;
+      }
+    }
+
+    .change-line {
+      @apply h-4 w-16;
+    }
+
+    .price-line {
+      @apply h-4 w-20;
+    }
+
+    .change-icon {
+      @apply h-3.5 w-3.5 rounded-full;
+    }
+  }
+
+  #coin-details-page {
+    @apply py-12 px-4 sm:px-6 mx-auto max-w-360 size-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 items-center gap-6 xl:gap-10 justify-center;
+
+    .primary {
+      @apply size-full xl:col-span-2;
+    }
+
+    .secondary {
+      @apply size-full max-lg:mt-8 lg:col-span-1;
+    }
+
+    .exchange-section {
+      @apply w-full mt-8 space-y-4;
+
+      h4 {
+        @apply text-xl md:text-2xl font-semibold mb-2;
+      }
+    }
+
+    .exchange-table {
+      @apply bg-dark-500 rounded-xl overflow-hidden mt-5;
+
+      .exchange-name {
+        @apply text-green-500 font-bold;
+
+        a {
+          @apply absolute inset-0 z-10;
+        }
+      }
+
+      .pair {
+        @apply font-medium h-full flex gap-1 py-4 pr-5 space-x-2;
+
+        p {
+          @apply truncate max-w-20 md:max-w-30 h-full;
+        }
+      }
+
+      .price-cell {
+        @apply font-medium;
+      }
+
+      .time-cell {
+        @apply pr-5 text-end;
+      }
+    }
+
+    .details {
+      @apply w-full mt-8 space-y-4;
+
+      h4 {
+        @apply text-xl md:text-2xl font-semibold mb-2 pb-3;
+      }
+
+      .details-grid {
+        @apply rounded-lg grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 gap-3 sm:gap-5;
+
+        li {
+          @apply text-base bg-dark-500 px-5 py-6 rounded-lg flex flex-col gap-3;
+
+          .label {
+            @apply text-purple-100;
+          }
+
+          .link {
+            @apply flex items-center text-green-500 gap-1;
+          }
+        }
+      }
+    }
+  }
+
+  #coins-page {
+    @apply py-12 px-4 sm:px-6 mx-auto max-w-360 size-full items-center gap-10 justify-center;
+
+    .content {
+      @apply flex flex-col w-full space-y-5;
+    }
+
+    h4 {
+      @apply text-2xl;
+    }
+
+    .coins-table {
+      @apply bg-dark-500 rounded-xl max-h-fit overflow-hidden;
+
+      .rank-cell {
+        @apply pl-5 max-w-20! py-5 font-medium text-purple-100;
+
+        a {
+          @apply absolute inset-0 z-10;
+        }
+      }
+
+      .token-cell {
+        @apply py-3 font-semibold;
+
+        .token-info {
+          @apply flex items-center gap-3;
+
+          p {
+            @apply max-w-full truncate;
+          }
+        }
+      }
+
+      .price-cell {
+        @apply py-4 font-medium;
+      }
+
+      .change-cell {
+        @apply font-medium;
+      }
+
+      .change-value {
+        @apply flex gap-1 items-center font-medium;
+      }
+
+      .market-cap-cell {
+        @apply pr-5 font-medium;
+      }
+    }
+  }
+
+  #search-modal {
+    .trigger {
+      @apply px-6 hover:bg-transparent! font-medium transition-all h-full cursor-pointer text-base text-purple-100 flex items-center gap-2;
+    }
+
+    .kbd {
+      @apply pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100;
+    }
+
+    .dialog {
+      @apply bg-dark-400! max-w-sm sm:max-w-md md:max-w-2xl mx-auto;
+    }
+
+    .cmd-input {
+      @apply bg-dark-500!;
+
+      input {
+        @apply placeholder:text-purple-100!;
+      }
+    }
+
+    .list {
+      @apply bg-dark-500 max-h-100;
+    }
+
+    .heading {
+      @apply flex items-center gap-2 text-purple-100;
+    }
+
+    .group {
+      @apply bg-dark-500 text-purple-100;
+    }
+  }
+
+  .dialog {
+    .empty {
+      @apply py-6 text-center text-sm text-gray-400;
+    }
+
+    .search-item {
+      @apply grid grid-cols-4 gap-4 items-center justify-between data-[selected=true]:bg-dark-400 transition-all !cursor-pointer hover:bg-dark-400 py-3;
+
+      .coin-info {
+        @apply flex gap-4 items-center col-span-2;
+
+        img {
+          @apply size-9 rounded-full;
+        }
+
+        div {
+          @apply flex flex-col;
+        }
+
+        .coin-symbol {
+          @apply text-sm text-purple-100 uppercase;
+        }
+      }
+
+      .coin-price {
+        @apply font-semibold text-sm lg:text-base;
+      }
+
+      .coin-change {
+        @apply flex gap-1 text-sm lg:text-base items-center font-medium;
+      }
+    }
+  }
+
+  #converter {
+    @apply w-full space-y-5;
+
+    h4 {
+      @apply text-2xl font-semibold;
+    }
+
+    .panel {
+      @apply space-y-2 bg-dark-500 px-5 py-7 rounded-lg;
+    }
+
+    .input-wrapper {
+      @apply bg-dark-400 h-12 w-full rounded-md flex items-center justify-between py-4 pr-4;
+
+      .input {
+        @apply flex-1 text-lg! border-none font-medium bg-dark-400! focus-visible:ring-0 shadow-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none;
+      }
+
+      .coin-info {
+        @apply flex items-center gap-1;
+
+        p {
+          @apply font-semibold text-base text-purple-100;
+        }
+      }
+    }
+
+    .divider {
+      @apply relative flex justify-center items-center my-4;
+
+      .line {
+        @apply h-px z-10 w-full bg-dark-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2;
+      }
+
+      .icon {
+        @apply size-8 z-20 bg-dark-400 rounded-full p-2 text-green-500;
+      }
+    }
+
+    .output-wrapper {
+      @apply bg-dark-400 h-12 w-full rounded-md flex items-center justify-between py-4 pl-4;
+
+      p {
+        @apply text-base font-medium;
+      }
+
+      .select-trigger {
+        @apply w-fit! border-none! cursor-pointer! h-12! bg-dark-400! hover:bg-dark-400! focus-visible:ring-0!;
+
+        .select-value {
+          @apply font-semibold! text-xs! text-purple-100!;
+        }
+      }
+
+      .select-content[data-converter] {
+        @apply bg-dark-400 max-h-125;
+
+        .select-item {
+          @apply cursor-pointer hover:bg-dark-500!;
+        }
+      }
+    }
+  }
+
+  #top-gainers-losers {
+    @apply mt-8 w-full;
+
+    .tabs-list {
+      @apply size-full! p-1! bg-transparent! border-b! border-dark-500! rounded-none!;
+    }
+
+    .tabs-trigger {
+      @apply data-[state=active]:border-none! data-[state=active]:bg-transparent! flex justify-start! mb-0! py-2! text-lg! font-semibold! md:text-2xl!;
+    }
+
+    .tabs-content {
+      @apply gap-4! mt-2! md:gap-5! sm:grid-cols-2! lg:grid-cols-1! grid!;
+    }
+  }
+
+  #coin-header {
+    @apply space-y-5 w-full;
+
+    h3 {
+      @apply text-3xl font-medium;
+    }
+
+    .info {
+      @apply flex gap-3 items-center;
+
+      img {
+        @apply size-11.25 sm:size-12.5 xl:size-19.25;
+      }
+    }
+
+    .price-row {
+      @apply flex gap-4;
+
+      h1 {
+        @apply text-3xl sm:text-5xl xl:text-6xl font-semibold;
+      }
+    }
+
+    .stats {
+      @apply grid grid-cols-3 mt-8 gap-4 sm:gap-6 w-fit;
+
+      li {
+        @apply text-base border-r last:border-none border-purple-600 flex flex-col gap-2;
+
+        .label {
+          @apply text-purple-100 max-sm:text-sm;
+        }
+
+        .value {
+          @apply flex gap-1 flex-1 items-end text-base font-medium;
+        }
+      }
+    }
+  }
+
+  #coin-overview {
+    @apply w-full h-full xl:col-span-2 px-2 bg-dark-500 rounded-xl;
+
+    .header {
+      @apply flex-1 mb-2 flex gap-2 md:gap-3;
+
+      img {
+        @apply w-10 h-10 md:w-14 md:h-14;
+      }
+
+      .info {
+        @apply flex flex-col;
+
+        p {
+          @apply flex text-purple-100 text-xs md:text-sm w-fit;
+        }
+
+        h1 {
+          @apply text-xl md:text-2xl font-semibold;
+        }
+      }
+    }
+  }
+
+  #coins-pagination {
+    .pagination-content {
+      @apply flex w-full;
+    }
+
+    .pagination-control {
+      @apply bg-dark-400 rounded-sm py-1;
+
+      &.prev {
+        @apply pr-2;
+      }
+
+      &.next {
+        @apply pl-2;
+      }
+    }
+
+    .control-button {
+      @apply cursor-pointer;
+    }
+
+    .control-disabled {
+      @apply pointer-events-none opacity-50;
+    }
+
+    .pagination-pages {
+      @apply flex flex-1 justify-center gap-2;
+
+      .ellipsis {
+        @apply px-3 py-2 text-base;
+      }
+
+      .page-link {
+        @apply hover:bg-dark-400! rounded-sm text-base cursor-pointer;
+      }
+
+      .page-link-active {
+        @apply bg-green-500! text-dark-900 font-semibold;
+      }
+    }
+  }
+
+  #live-data-wrapper {
+    @apply size-full xl:col-span-2;
+
+    .divider {
+      @apply my-8! bg-purple-600!;
+    }
+
+    .trend {
+      @apply w-full;
+
+      h4 {
+        @apply text-xl md:text-2xl font-semibold mb-2 mt-2 pl-2;
+      }
+    }
+
+    .trades {
+      @apply w-full my-8 space-y-4;
+
+      h4 {
+        @apply text-xl md:text-2xl font-semibold mb-2;
+      }
+    }
+
+    .trades-table {
+      @apply bg-dark-500 mt-5 rounded-xl overflow-hidden;
+
+      .price-cell {
+        @apply pl-5 py-5 font-medium;
+      }
+
+      .amount-cell {
+        @apply py-4 font-medium;
+      }
+
+      .value-cell {
+        @apply font-medium;
+      }
+
+      .type-cell {
+        @apply font-medium;
+      }
+
+      .time-cell {
+        @apply pr-5;
+      }
+    }
+  }
+}
+
+/* Custom Scrollbar Styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #1e2833;
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #171a34;
+}
+
+/* Table Custom Scrollbar */
+.custom-scrollbar [data-slot='table-container'] {
+  overflow-y: auto;
+}
+
+.custom-scrollbar [data-slot='table-container']::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.custom-scrollbar [data-slot='table-container']::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar [data-slot='table-container']::-webkit-scrollbar-thumb {
+  background: #1e2833;
+  border-radius: 8px;
+}
+
+.custom-scrollbar [data-slot='table-container']::-webkit-scrollbar-thumb:hover {
+  background: #171a34;
 }
