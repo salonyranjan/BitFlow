@@ -1,36 +1,37 @@
 'use server';
 
 import qs from 'query-string';
-import React from 'react';
 
-// --- 1. TYPE DEFINITIONS ---
+// --- TYPES ---
 export type OHLCData = [number, number, number, number, number];
+
+export interface CurrencyMap {
+  usd: number;
+  [key: string]: number;
+}
 
 export interface CoinDetailsData {
   id: string;
   name: string;
   symbol: string;
   asset_platform_id: string | null;
-  detail_platforms: Record<string, { 
-    geckoterminal_url: string; 
-    contract_address: string; 
-  }>;
-  image: { small: string; large: string; thumb: string };
+  detail_platforms: Record<string, { geckoterminal_url: string; contract_address: string }>;
+  image: { large: string; small: string; thumb: string };
   market_cap_rank: number;
-  description: { en: string }; 
-  tickers: any[];              
+  description: { en: string };
+  tickers: any[];
   links: {
     homepage: string[];
     blockchain_site: string[];
-    subreddit_url: string; // Forced to string to satisfy local strict types
+    subreddit_url: string; 
   };
-  market_data: { 
-    current_price: { [key: string]: number; usd: number };
-    price_change_24h_in_currency: { [key: string]: number; usd: number };
-    price_change_percentage_24h_in_currency: { [key: string]: number; usd: number };
-    price_change_percentage_30d_in_currency: { [key: string]: number; usd: number };
-    market_cap: { [key: string]: number; usd: number };
-    total_volume: { [key: string]: number; usd: number };
+  market_data: {
+    current_price: CurrencyMap;
+    market_cap: CurrencyMap;
+    total_volume: CurrencyMap;
+    price_change_24h_in_currency: CurrencyMap;
+    price_change_percentage_24h_in_currency: CurrencyMap;
+    price_change_percentage_30d_in_currency: CurrencyMap;
   };
 }
 
@@ -41,62 +42,37 @@ export interface PoolData {
   network: string;
 }
 
-export interface NextPageProps {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
-export interface QueryParams {
-  vs_currency?: string;
-  days?: string | number;
-  [key: string]: any; 
-}
-
-const BASE_URL = "https://api.coingecko.com/api/v3"; 
+const BASE_URL = "https://api.coingecko.com/api/v3";
 const API_KEY = process.env.COINGECKO_API_KEY;
 
-if (!API_KEY) throw new Error('COINGECKO_API_KEY is missing.');
-
-// --- 2. THE FETCHER ---
-export async function fetcher<T>(
-  endpoint: string,
-  params?: QueryParams,
-  revalidate = 60,
-): Promise<T> {
+// --- FETCHER ---
+export async function fetcher<T>(endpoint: string, params?: any): Promise<T> {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  
-  const sanitizedParams = { ...params };
+  let sanitizedParams = { ...params };
+
+  // Strict whitelist for OHLC to stay compliant with Demo API
   if (cleanEndpoint.includes('/ohlc')) {
-    delete sanitizedParams.interval;
-    delete sanitizedParams.precision;
+    sanitizedParams = {
+      vs_currency: params.vs_currency || 'usd',
+      days: params.days || '1',
+    };
   }
 
   const url = qs.stringifyUrl(
-    {
-      url: `${BASE_URL}${cleanEndpoint}`,
-      query: sanitizedParams,
-    },
+    { url: `${BASE_URL}${cleanEndpoint}`, query: sanitizedParams },
     { skipEmptyString: true, skipNull: true }
   );
 
   const response = await fetch(url, {
     method: 'GET',
-    headers: {
-      'x-cg-demo-api-key': API_KEY!,
-      'Accept': 'application/json',
-    },
-    next: { revalidate },
+    headers: { 'x-cg-demo-api-key': API_KEY || '', 'Accept': 'application/json' },
+    next: { revalidate: 60 },
   });
 
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({}));
-    console.error(`[BitFlow Pro Error] ${response.status}: ${url}`);
-    throw new Error(`API Error: ${response.status}: ${errorBody.error || response.statusText}`);
-  }
-
+  if (!response.ok) throw new Error(`API Error: ${response.status}`);
   const data = await response.json();
 
-  // Normalize nulls to strings for TypeScript strict mode
+  // Normalize null subreddit_url to string for TS safety
   if (data?.links && data.links.subreddit_url === null) {
     data.links.subreddit_url = "";
   }
@@ -104,18 +80,38 @@ export async function fetcher<T>(
   return data as T;
 }
 
-export async function getPools(id: string): Promise<PoolData> {
-  const fallback: PoolData = { id: '', address: '', name: '', network: '' };
+// --- POOL RESOLUTION ---
+export async function getPools(id: string, platformId?: string | null, contract?: string | null): Promise<PoolData | null> {
+  const networkMap: Record<string, string> = {
+    'ethereum': 'eth',
+    'binance-smart-chain': 'bsc',
+    'polygon-pos': 'polygon',
+    'arbitrum-one': 'arbitrum',
+    'base': 'base',
+    'solana': 'solana'
+  };
+
+  const networkSlug = platformId ? (networkMap[platformId] || platformId) : null;
+
   try {
-    const res = await fetcher<{ data: any[] }>('onchain/search/pools', { query: id });
-    const pool = res.data?.[0];
+    if (networkSlug && contract && networkSlug !== 'tokens') {
+      const res = await fetcher<{ data: any[] }>(`/onchain/networks/${networkSlug}/tokens/${contract}/pools`);
+      if (res.data?.[0]) {
+        return {
+          id: res.data[0].id,
+          address: res.data[0].attributes.address,
+          name: res.data[0].attributes.name,
+          network: networkSlug
+        };
+      }
+    }
+    const search = await fetcher<{ data: any[] }>(`onchain/search/pools`, { query: id });
+    const pool = search.data?.[0];
     return pool ? {
       id: pool.id,
-      address: pool.attributes?.address || '',
-      name: pool.attributes?.name || '',
-      network: pool.id.split('_')[0] || 'unknown',
-    } : fallback;
-  } catch {
-    return fallback;
-  }
+      address: pool.attributes.address,
+      name: pool.attributes.name,
+      network: pool.id.split('_')[0]
+    } : null;
+  } catch { return null; }
 }

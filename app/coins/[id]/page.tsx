@@ -3,8 +3,7 @@ import {
   fetcher, 
   getPools, 
   type CoinDetailsData, 
-  type OHLCData, 
-  type NextPageProps 
+  type OHLCData 
 } from '@/lib/coingecko.actions';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
@@ -12,10 +11,14 @@ import { formatCurrency } from '@/lib/utils';
 import LiveDataWrapper from '@/components/LiveDataWrapper';
 import Converter from '@/components/Converter';
 
-const Page = async ({ params }: NextPageProps) => {
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+const Page = async ({ params }: PageProps) => {
   const { id } = await params;
 
-  // Fetching data with the corrected parameters
+  // 1. Fetch data
   const [coinData, coinOHLCData] = await Promise.all([
     fetcher<CoinDetailsData>(`/coins/${id}`, {
       localization: false,
@@ -25,12 +28,15 @@ const Page = async ({ params }: NextPageProps) => {
     fetcher<OHLCData[]>(`/coins/${id}/ohlc`, {
       vs_currency: 'usd',
       days: 1, 
-      // interval and precision removed to stay compliant with CoinGecko API
     }),
   ]);
 
-  const pool = await getPools(id);
+  // 2. Resolve on-chain data
+  const platformId = coinData.asset_platform_id;
+  const contract = platformId ? coinData.detail_platforms[platformId]?.contract_address : null;
+  const pool = await getPools(id, platformId, contract);
 
+  // 3. UI details list
   const coinDetails = [
     {
       label: 'Market Cap',
@@ -46,30 +52,27 @@ const Page = async ({ params }: NextPageProps) => {
     },
     {
       label: 'Website',
-      value: '-',
-      link: coinData.links.homepage[0],
+      link: coinData.links.homepage?.[0] || null,
       linkText: 'Homepage',
     },
     {
       label: 'Explorer',
-      value: '-',
-      link: coinData.links.blockchain_site[0],
+      link: coinData.links.blockchain_site?.[0] || null,
       linkText: 'Explorer',
     },
     {
       label: 'Community',
-      value: '-',
-      link: coinData.links.subreddit_url,
-      linkText: 'Community',
+      link: coinData.links.subreddit_url || null,
+      linkText: 'Reddit',
     },
   ];
 
   return (
-    <main id="coin-details-page" className="p-4 lg:p-8">
+    <main id="coin-details-page" className="p-4 lg:p-8 max-w-7xl mx-auto">
       <section className="primary">
         <LiveDataWrapper 
           coinId={id} 
-          poolId={pool.id} 
+          poolId={pool?.id || ''} 
           coin={coinData} 
           coinOHLCData={coinOHLCData}
         >
@@ -91,14 +94,14 @@ const Page = async ({ params }: NextPageProps) => {
               <li key={index} className="flex flex-col">
                 <p className="text-sm text-zinc-400">{label}</p>
                 {link ? (
-                  <div className="link flex items-center gap-1 text-blue-400 hover:text-blue-300">
+                  <div className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors w-fit">
                     <Link href={link} target="_blank" className="text-sm font-medium">
-                      {linkText || label}
+                      {linkText}
                     </Link>
                     <ArrowUpRight size={14} />
                   </div>
                 ) : (
-                  <p className="text-base font-medium text-zinc-100">{value}</p>
+                  <p className="text-base font-medium text-zinc-100">{value || 'N/A'}</p>
                 )}
               </li>
             ))}

@@ -4,169 +4,188 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import {
   getCandlestickConfig,
   getChartConfig,
-  LIVE_INTERVAL_BUTTONS,
   PERIOD_BUTTONS,
   PERIOD_CONFIG,
 } from '@/constants';
-import { CandlestickSeries, createChart, IChartApi, ISeriesApi } from 'lightweight-charts';
-import { fetcher } from '@/lib/coingecko.actions';
-import { convertOHLCData } from '@/lib/utils';
+import { 
+  CandlestickSeries, 
+  createChart, 
+  IChartApi, 
+  ISeriesApi, 
+  type Time,
+  ColorType
+} from 'lightweight-charts';
+import { fetcher, type OHLCData } from '@/lib/coingecko.actions';
+
+type Period = keyof typeof PERIOD_CONFIG;
+
+interface CandlestickChartProps {
+  children?: React.ReactNode;
+  data: OHLCData[];
+  coinId: string;
+  height?: number;
+  initialPeriod?: Period;
+  liveOhlcv?: OHLCData | null;
+  mode?: 'historical' | 'live';
+}
+
+const sanitizeOHLC = (rawData: OHLCData[]) => {
+  if (!rawData || !Array.isArray(rawData) || rawData.length === 0) return [];
+
+  const processed = rawData
+    .map((item) => ({
+      time: (Math.floor(item[0] / 1000)) as Time,
+      open: item[1],
+      high: item[2],
+      low: item[3],
+      close: item[4],
+    }))
+    .filter((item) => !isNaN(item.time as unknown as number) && item.open != null)
+    .sort((a, b) => (a.time as unknown as number) - (b.time as unknown as number));
+
+  return processed.filter((item, index, self) => 
+    index === 0 || (item.time as unknown as number) > (self[index - 1].time as unknown as number)
+  );
+};
 
 const CandlestickChart = ({
   children,
   data,
   coinId,
-  height = 360,
-  initialPeriod = 'daily',
+  height = 400, // Slightly taller
+  initialPeriod = 'daily' as Period,
   liveOhlcv = null,
   mode = 'historical',
-  liveInterval,
-  setLiveInterval,
 }: CandlestickChartProps) => {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
-  const prevOhlcDataLength = useRef<number>(data?.length || 0);
-
-  const [period, setPeriod] = useState(initialPeriod);
+  
+  const [period, setPeriod] = useState<Period>(initialPeriod);
   const [ohlcData, setOhlcData] = useState<OHLCData[]>(data ?? []);
   const [isPending, startTransition] = useTransition();
 
   const fetchOHLCData = async (selectedPeriod: Period) => {
     try {
-      const { days, interval } = PERIOD_CONFIG[selectedPeriod];
-
+      const { days } = PERIOD_CONFIG[selectedPeriod];
       const newData = await fetcher<OHLCData[]>(`/coins/${coinId}/ohlc`, {
         vs_currency: 'usd',
         days,
-        interval,
-        precision: 'full',
       });
-
       startTransition(() => {
         setOhlcData(newData ?? []);
       });
     } catch (e) {
-      console.error('Failed to fetch OHLCData', e);
+      console.error('Fetch Error:', e);
     }
   };
 
-  const handlePeriodChange = (newPeriod: Period) => {
-    if (newPeriod === period) return;
-
-    setPeriod(newPeriod);
-    fetchOHLCData(newPeriod);
-  };
-
   useEffect(() => {
-    const container = chartContainerRef.current;
-    if (!container) return;
+    if (!chartContainerRef.current) return;
 
-    const showTime = ['daily', 'weekly', 'monthly'].includes(period);
-
-    const chart = createChart(container, {
-      ...getChartConfig(height, showTime),
-      width: container.clientWidth,
+    // Explicit Chart Configuration for visibility
+    const chart = createChart(chartContainerRef.current, {
+      width: chartContainerRef.current.clientWidth,
+      height: height,
+      layout: {
+        background: { type: ColorType.Solid, color: '#09090b' }, // Matches zinc-950
+        textColor: '#a1a1aa',
+      },
+      grid: {
+        vertLines: { color: '#18181b' },
+        horzLines: { color: '#18181b' },
+      },
+      timeScale: {
+        borderColor: '#27272a',
+        timeVisible: true,
+      }
     });
-    const series = chart.addSeries(CandlestickSeries, getCandlestickConfig());
+    
+    const series = chart.addSeries(CandlestickSeries, {
+      upColor: '#22c55e',
+      downColor: '#ef4444',
+      borderVisible: false,
+      wickUpColor: '#22c55e',
+      wickDownColor: '#ef4444',
+    });
 
-    const convertedToSeconds = ohlcData.map(
-      (item) => [Math.floor(item[0] / 1000), item[1], item[2], item[3], item[4]] as OHLCData,
-    );
-
-    series.setData(convertOHLCData(convertedToSeconds));
-    chart.timeScale().fitContent();
+    const sanitized = sanitizeOHLC(ohlcData);
+    
+    if (sanitized.length > 0) {
+      series.setData(sanitized);
+      chart.timeScale().fitContent();
+    } else {
+      console.warn("No data points were valid after sanitization.");
+    }
 
     chartRef.current = chart;
     candleSeriesRef.current = series;
 
-    const observer = new ResizeObserver((entries) => {
-      if (!entries.length) return;
-      chart.applyOptions({ width: entries[0].contentRect.width });
-    });
-    observer.observe(container);
+    const handleResize = () => {
+      if (chartContainerRef.current && chartRef.current) {
+        chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      observer.disconnect();
+      window.removeEventListener('resize', handleResize);
       chart.remove();
-      chartRef.current = null;
-      candleSeriesRef.current = null;
     };
-  }, [height, period]);
+  }, [height, period, ohlcData.length === 0]); // Re-init if data was initially empty
 
   useEffect(() => {
     if (!candleSeriesRef.current) return;
-
-    const convertedToSeconds = ohlcData.map(
-      (item) => [Math.floor(item[0] / 1000), item[1], item[2], item[3], item[4]] as OHLCData,
-    );
-
-    let merged: OHLCData[];
-
+    let combined = [...ohlcData];
     if (liveOhlcv) {
-      const liveTimestamp = liveOhlcv[0];
-
-      const lastHistoricalCandle = convertedToSeconds[convertedToSeconds.length - 1];
-
-      if (lastHistoricalCandle && lastHistoricalCandle[0] === liveTimestamp) {
-        merged = [...convertedToSeconds.slice(0, -1), liveOhlcv];
-      } else {
-        merged = [...convertedToSeconds, liveOhlcv];
-      }
-    } else {
-      merged = convertedToSeconds;
+      const idx = combined.findIndex(d => d[0] === liveOhlcv[0]);
+      idx !== -1 ? combined[idx] = liveOhlcv : combined.push(liveOhlcv);
     }
-
-    merged.sort((a, b) => a[0] - b[0]);
-
-    const converted = convertOHLCData(merged);
-    candleSeriesRef.current.setData(converted);
-
-    const dataChanged = prevOhlcDataLength.current !== ohlcData.length;
-
-    if (dataChanged || mode === 'historical') {
-      chartRef.current?.timeScale().fitContent();
-      prevOhlcDataLength.current = ohlcData.length;
+    const finalData = sanitizeOHLC(combined);
+    if (finalData.length > 0) {
+      candleSeriesRef.current.setData(finalData);
+      if (mode === 'historical') chartRef.current?.timeScale().fitContent();
     }
-  }, [ohlcData, period, liveOhlcv, mode]);
+  }, [ohlcData, liveOhlcv, mode]);
 
   return (
-    <div id="candlestick-chart">
-      <div className="chart-header">
-        <div className="flex-1">{children}</div>
-
-        <div className="button-group">
-          <span className="text-sm mx-2 font-medium text-purple-100/50">Period:</span>
+    <div className="w-full">
+      <div className="flex flex-col sm:flex-row justify-between mb-4 gap-4">
+        {children}
+        <div className="flex bg-zinc-900 p-1 rounded-lg border border-zinc-800 self-end">
           {PERIOD_BUTTONS.map(({ value, label }) => (
             <button
               key={value}
-              className={period === value ? 'config-button-active' : 'config-button'}
-              onClick={() => handlePeriodChange(value)}
               disabled={isPending}
+              onClick={() => {
+                const p = value as Period;
+                setPeriod(p);
+                fetchOHLCData(p);
+              }}
+              className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                period === value ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'
+              }`}
             >
               {label}
             </button>
           ))}
         </div>
-
-        {liveInterval && (
-          <div className="button-group">
-            <span className="text-sm mx-2 font-medium text-purple-100/50">Update Frequency:</span>
-            {LIVE_INTERVAL_BUTTONS.map(({ value, label }) => (
-              <button
-                key={value}
-                className={liveInterval === value ? 'config-button-active' : 'config-button'}
-                onClick={() => setLiveInterval && setLiveInterval(value)}
-                disabled={isPending}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
+      
+      {/* Fallback for empty data */}
+      {ohlcData.length === 0 && !isPending && (
+        <div className="absolute inset-0 flex items-center justify-center text-zinc-500 bg-zinc-950/50 rounded-xl border border-dashed border-zinc-800" style={{ height }}>
+          No chart data available for this period.
+        </div>
+      )}
 
-      <div ref={chartContainerRef} className="chart" style={{ height }} />
+      {/* THE CONTAINER: Must have 'relative' and a defined height */}
+      <div 
+        ref={chartContainerRef} 
+        className="w-full rounded-xl bg-zinc-950 border border-zinc-800 relative overflow-hidden" 
+        style={{ height, minHeight: `${height}px` }} 
+      />
     </div>
   );
 };
