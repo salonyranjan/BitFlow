@@ -1,90 +1,35 @@
-import React from 'react';
-import { fetcher, getPools, type OHLCData, type CoinDetailsData, type NextPageProps } from '@/lib/coingecko.actions';
-import { formatCurrency } from '@/lib/utils';
-import Link from 'next/link';
+import { getCoinOHLC } from '@/lib/coingecko.actions';
 
-const Page = async ({ params }: NextPageProps) => {
-  // NEXT.JS 16 FIX: Must await params
+interface PageProps {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ days?: string }>;
+}
+
+export default async function Page({ params, searchParams }: PageProps) {
+  // 1. Await the promises (Required in Next.js 15+)
   const { id } = await params;
+  const sParams = await searchParams;
+  const days = sParams.days || '1';
 
   try {
-    /**
-     * SURGICAL FIX: 
-     * We removed 'interval' and 'precision' parameters.
-     * The Demo API automatically provides the correct granularity for days=1.
-     * Including extra params causes the 400 "invalid interval" error.
-     */
-    const [coin, ohlc, pools] = await Promise.all([
-      fetcher<CoinDetailsData>(`coins/${id}`, {
-        localization: false,
-        tickers: false,
-      }),
-      fetcher<OHLCData[]>(`coins/${id}/ohlc`, { 
-        vs_currency: 'usd', 
-        days: 1 
-      }), 
-      getPools(id),
-    ]);
+    // 2. Use the dedicated helper that ONLY sends valid params
+    const chartData = await getCoinOHLC(id, days);
 
     return (
-      <main className="main-container py-10">
-        <section className="flex flex-col gap-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <img 
-                src={coin.image.large} 
-                alt={coin.name} 
-                className="h-12 w-12 rounded-full ring-2 ring-border/50" 
-              />
-              <h1 className="text-3xl font-black tracking-tighter uppercase italic">
-                {coin.name} <span className="text-muted-foreground font-light">{coin.symbol}</span>
-              </h1>
-            </div>
-            <div className="text-right font-mono">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Live Price</p>
-              <p className="text-2xl font-bold text-green-500">
-                {formatCurrency(coin.market_data.current_price.usd)}
-              </p>
-            </div>
-          </div>
-
-          {/* Terminal Visualization Placeholder */}
-          <div className="relative h-[400px] w-full rounded-2xl border border-dashed border-border bg-muted/5 flex items-center justify-center overflow-hidden">
-             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent opacity-50" />
-             <p className="font-mono text-[10px] uppercase tracking-[0.5em] text-muted-foreground animate-pulse">
-                Terminal Sync: {ohlc.length} Candles Active
-             </p>
-          </div>
-
-          {/* On-Chain Data */}
-          {pools.address && (
-            <div className="rounded-xl border border-border/40 bg-card/40 p-6 backdrop-blur-md">
-              <h3 className="text-xs font-black uppercase tracking-widest text-primary mb-4">On-Chain Terminal</h3>
-              <p className="text-sm font-mono text-muted-foreground">
-                Network: <span className="text-foreground">{pools.network}</span>
-              </p>
-              <p className="text-sm font-mono text-muted-foreground">
-                Contract: <span className="text-primary truncate block md:inline">{pools.address}</span>
-              </p>
-            </div>
-          )}
-        </section>
-      </main>
+      <div className="p-6">
+        <h1>Market Data for {id}</h1>
+        {/* Pass chartData to your Chart Component here */}
+        <pre className="text-xs opacity-50">
+            Data Points: {chartData.length}
+        </pre>
+      </div>
     );
-  } catch (error) {
-    console.error("[BitFlow Terminal Error]:", error);
+  } catch (error: any) {
     return (
-      <div className="main-container py-20 text-center">
-        <h2 className="text-xl font-black uppercase text-red-500">Connection Failed</h2>
-        <p className="text-xs text-muted-foreground mt-2 uppercase tracking-tighter">
-          The terminal could not synchronize with the market data stream.
-        </p>
-        <Link href="/" className="mt-8 inline-block text-[10px] font-black uppercase tracking-widest border-b border-primary text-primary pb-1">
-          Return to Dashboard
-        </Link>
+      <div className="p-10 border border-red-500 bg-red-50/10 rounded-lg">
+        <h2 className="text-red-500 font-bold">Failed to load chart data</h2>
+        <p className="text-sm">{error.message}</p>
       </div>
     );
   }
-};
-
-export default Page;
+}

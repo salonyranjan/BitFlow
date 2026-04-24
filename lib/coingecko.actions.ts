@@ -6,36 +6,31 @@ import React from 'react';
 // --- 1. TYPE DEFINITIONS ---
 export type OHLCData = [number, number, number, number, number];
 
-export interface DataTableColumn<T> {
-  header: React.ReactNode;
-  cell: (row: T, index: number) => React.ReactNode;
-  headClassName?: string;
-  cellClassName?: string;
-}
-
-export interface CoinMarketData {
-  id: string;
-  symbol: string;
-  name: string;
-  image: string;
-  current_price: number;
-  market_cap: number;
-  market_cap_rank: number;
-  price_change_percentage_24h: number;
-}
-
-export interface NextPageProps {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
 export interface CoinDetailsData {
   id: string;
   name: string;
   symbol: string;
-  image: { large: string };
+  asset_platform_id: string | null;
+  detail_platforms: Record<string, { 
+    geckoterminal_url: string; 
+    contract_address: string; 
+  }>;
+  image: { small: string; large: string; thumb: string };
+  market_cap_rank: number;
+  description: { en: string }; 
+  tickers: any[];              
+  links: {
+    homepage: string[];
+    blockchain_site: string[];
+    subreddit_url: string; // Forced to string to satisfy local strict types
+  };
   market_data: { 
-    current_price: { usd: number };
+    current_price: { [key: string]: number; usd: number };
+    price_change_24h_in_currency: { [key: string]: number; usd: number };
+    price_change_percentage_24h_in_currency: { [key: string]: number; usd: number };
+    price_change_percentage_30d_in_currency: { [key: string]: number; usd: number };
+    market_cap: { [key: string]: number; usd: number };
+    total_volume: { [key: string]: number; usd: number };
   };
 }
 
@@ -46,20 +41,23 @@ export interface PoolData {
   network: string;
 }
 
+export interface NextPageProps {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
 export interface QueryParams {
   vs_currency?: string;
   days?: string | number;
   [key: string]: any; 
 }
 
-// --- 2. CONFIGURATION ---
 const BASE_URL = "https://api.coingecko.com/api/v3"; 
 const API_KEY = process.env.COINGECKO_API_KEY;
 
 if (!API_KEY) throw new Error('COINGECKO_API_KEY is missing.');
 
-// --- 3. SERVER ACTIONS ---
-
+// --- 2. THE FETCHER ---
 export async function fetcher<T>(
   endpoint: string,
   params?: QueryParams,
@@ -67,10 +65,16 @@ export async function fetcher<T>(
 ): Promise<T> {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   
+  const sanitizedParams = { ...params };
+  if (cleanEndpoint.includes('/ohlc')) {
+    delete sanitizedParams.interval;
+    delete sanitizedParams.precision;
+  }
+
   const url = qs.stringifyUrl(
     {
       url: `${BASE_URL}${cleanEndpoint}`,
-      query: params,
+      query: sanitizedParams,
     },
     { skipEmptyString: true, skipNull: true }
   );
@@ -90,7 +94,14 @@ export async function fetcher<T>(
     throw new Error(`API Error: ${response.status}: ${errorBody.error || response.statusText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+
+  // Normalize nulls to strings for TypeScript strict mode
+  if (data?.links && data.links.subreddit_url === null) {
+    data.links.subreddit_url = "";
+  }
+
+  return data as T;
 }
 
 export async function getPools(id: string): Promise<PoolData> {
