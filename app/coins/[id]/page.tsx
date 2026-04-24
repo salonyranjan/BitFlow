@@ -18,7 +18,6 @@ interface PageProps {
 const Page = async ({ params }: PageProps) => {
   const { id } = await params;
 
-  // 1. Fetch data
   const [coinData, coinOHLCData] = await Promise.all([
     fetcher<CoinDetailsData>(`/coins/${id}`, {
       localization: false,
@@ -31,83 +30,66 @@ const Page = async ({ params }: PageProps) => {
     }),
   ]);
 
-  // 2. Resolve on-chain data
   const platformId = coinData.asset_platform_id;
   const contract = platformId ? coinData.detail_platforms[platformId]?.contract_address : null;
   const pool = await getPools(id, platformId, contract);
 
-  // 3. UI details list
   const coinDetails = [
-    {
-      label: 'Market Cap',
-      value: formatCurrency(coinData.market_data.market_cap.usd),
-    },
-    {
-      label: 'Market Cap Rank',
-      value: `# ${coinData.market_cap_rank || 'N/A'}`,
-    },
-    {
-      label: 'Total Volume',
-      value: formatCurrency(coinData.market_data.total_volume.usd),
-    },
-    {
-      label: 'Website',
-      link: coinData.links.homepage?.[0] || null,
-      linkText: 'Homepage',
-    },
-    {
-      label: 'Explorer',
-      link: coinData.links.blockchain_site?.[0] || null,
-      linkText: 'Explorer',
-    },
-    {
-      label: 'Community',
-      link: coinData.links.subreddit_url || null,
-      linkText: 'Reddit',
-    },
+    { label: 'Market Cap', value: formatCurrency(coinData.market_data.market_cap.usd) },
+    { label: 'Market Cap Rank', value: `# ${coinData.market_cap_rank || 'N/A'}` },
+    { label: 'Total Volume', value: formatCurrency(coinData.market_data.total_volume.usd) },
+    { label: 'Website', link: coinData.links.homepage?.[0] || null, linkText: 'Homepage' },
+    { label: 'Explorer', link: coinData.links.blockchain_site?.[0] || null, linkText: 'Explorer' },
+    { label: 'Community', link: coinData.links.subreddit_url || null, linkText: 'Reddit' },
   ];
 
   return (
-    <main id="coin-details-page" className="p-4 lg:p-8 max-w-7xl mx-auto">
-      <section className="primary">
-        <LiveDataWrapper 
-          coinId={id} 
-          poolId={pool?.id || ''} 
-          coin={coinData} 
-          coinOHLCData={coinOHLCData}
-        >
-          <h4 className="font-bold text-lg text-white mt-4">Exchange Listings</h4>
-        </LiveDataWrapper>
-      </section>
-
-      <section className="secondary mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Converter
-          symbol={coinData.symbol}
-          icon={coinData.image.large}
-          priceList={coinData.market_data.current_price}
-        />
-
-        <div className="details p-6 bg-zinc-900 rounded-xl border border-zinc-800">
-          <h4 className="text-xl font-semibold mb-4 text-white">Coin Details</h4>
-          <ul className="details-grid grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
-            {coinDetails.map(({ label, value, link, linkText }, index) => (
-              <li key={index} className="flex flex-col">
-                <p className="text-sm text-zinc-400">{label}</p>
-                {link ? (
-                  <div className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors w-fit">
-                    <Link href={link} target="_blank" className="text-sm font-medium">
-                      {linkText}
-                    </Link>
-                    <ArrowUpRight size={14} />
-                  </div>
-                ) : (
-                  <p className="text-base font-medium text-zinc-100">{value || 'N/A'}</p>
-                )}
-              </li>
-            ))}
-          </ul>
+    <main className="p-4 lg:p-8 max-w-[1600px] mx-auto min-h-screen">
+      <div className="flex flex-col lg:flex-row gap-8 items-start w-full">
+        
+        {/* LEFT COLUMN: Fills remaining space */}
+        <div className="w-full lg:flex-1 min-w-0">
+          <LiveDataWrapper 
+            coinId={id} 
+            poolId={pool?.id || ''} 
+            coin={coinData} 
+            coinOHLCData={coinOHLCData ?? []} 
+          />
         </div>
-      </section>
+
+        {/* RIGHT COLUMN: Fixed Sidebar */}
+        <aside className="w-full lg:w-[400px] flex flex-col gap-6 shrink-0 lg:sticky lg:top-8">
+          <Converter
+            symbol={coinData.symbol}
+            icon={coinData.image.large}
+            priceList={coinData.market_data.current_price}
+          />
+
+          <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl">
+            <h4 className="text-xl font-bold mb-6 text-white border-b border-zinc-800 pb-3">
+              Coin Details
+            </h4>
+            <ul className="flex flex-col gap-5">
+              {coinDetails.map(({ label, value, link, linkText }, index) => (
+                <li key={index} className="flex justify-between items-center text-sm gap-4">
+                  <span className="text-zinc-400 font-medium whitespace-nowrap">{label}</span>
+                  {link ? (
+                    <Link 
+                      href={link} 
+                      target="_blank" 
+                      className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors font-semibold"
+                    >
+                      {linkText} <ArrowUpRight size={14} />
+                    </Link>
+                  ) : (
+                    <span className="text-zinc-100 font-bold text-right">{value || 'N/A'}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      </div>
     </main>
   );
 };
