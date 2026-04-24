@@ -4,21 +4,31 @@
   </a>
 </p>
 
-<h1 align="center">⚡ BitFlow | Neon Crypto Intelligence Terminal</h1>
+<h1 align="center">⚡ BitFlow | Crypto Intelligence Terminal</h1>
 
 <p align="center">
   <i>A high-performance, obsidian-grade dashboard for real-time asset tracking and market intelligence.</i>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" />
-  <img src="https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=for-the-badge&logo=tailwind-css" />
-  <img src="https://img.shields.io/badge/Vercel-Deployed-white?style=for-the-badge&logo=vercel" />
-  <img src="https://img.shields.io/badge/License-MIT-purple?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=next.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white" />
+  <img src="https://img.shields.io/badge/Maintained%3F-yes-06b6d4?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Build-Success-emerald?style=for-the-badge" />
+  <img src="https://img.shields. ://img.shields.io/badge/License-MIT-purple?style=for-the-badge" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/stars/salonyranjan/BitFlow?style=social" />
+  <img src="https://img.shields.io/github/forks/salonyranjan/BitFlow?style=social" />
 </p>
 
 ---
-
 ## 🌌 The Intelligence Cockpit
 
 BitFlow is a premium cryptocurrency terminal designed for the "Obsidian Hours." It transforms complex market data into a clean, actionable visual experience through optimized glassmorphism and prioritized data hierarchy.
@@ -32,6 +42,11 @@ BitFlow is a premium cryptocurrency terminal designed for the "Obsidian Hours." 
 * **📱 Precision Responsive**: A unified experience across ultra-wide monitors and mobile devices.
 
 ---
+## 🏛️ System Architecture & Data Flow
+
+<p align="center">
+  <img src="./public/architecture-flow.png" alt="BitFlow Technical Architecture Diagram" width="100%">
+</p>
 
 ## 🛠️ The Tech Stack
 
