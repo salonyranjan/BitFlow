@@ -448,7 +448,7 @@ BitFlow is engineered for **Type-Safety**, **Real-Time Performance**, and **Obsi
 |:---:|:---:|:---:|
 | *Real-time cross-asset conversion* | *Layer 1 vs DeFi vs Stablecoin dominance* | *Precision responsive at 320px* |
 
-> 📷 *Visit the live terminal at [bitflow-three.vercel.app](https://bit-flow-two.vercel.app) for the full interactive experience.*
+> 📷 *Visit the live terminal at [bit-flow-two.vercel.app](https://bit-flow-two.vercel.app) for the full interactive experience.*
 
 </div>
 
