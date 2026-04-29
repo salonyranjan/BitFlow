@@ -8,7 +8,7 @@
 
 <br/>
 
-<a href="https://bitflow-three.vercel.app">
+<a href="https://bit-flow-two.vercel.app">
   <img src="./public/bitflow-hero.png" alt="BitFlow Intelligence Terminal" width="100%" style="border-radius: 12px; box-shadow: 0 0 40px #06b6d4;" />
 </a>
 
@@ -46,7 +46,7 @@
 
 <p><i>"A high-performance, obsidian-grade dashboard for real-time asset tracking and market intelligence."</i></p>
 
-<a href="https://bitflow-three.vercel.app">
+<a href="https://bit-flow-two.vercel.app">
   <img src="https://img.shields.io/badge/🚀_Launch_Terminal-06b6d4?style=for-the-badge&logoColor=black" />
 </a>
 &nbsp;
@@ -448,7 +448,7 @@ BitFlow is engineered for **Type-Safety**, **Real-Time Performance**, and **Obsi
 |:---:|:---:|:---:|
 | *Real-time cross-asset conversion* | *Layer 1 vs DeFi vs Stablecoin dominance* | *Precision responsive at 320px* |
 
-> 📷 *Visit the live terminal at [bitflow-three.vercel.app](https://bitflow-three.vercel.app) for the full interactive experience.*
+> 📷 *Visit the live terminal at [bitflow-three.vercel.app](https://bit-flow-two.vercel.app) for the full interactive experience.*
 
 </div>
 
